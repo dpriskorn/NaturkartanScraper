@@ -1,5 +1,4 @@
 import logging
-from pprint import pprint
 
 import requests
 from bs4 import SoupStrainer, BeautifulSoup
@@ -43,13 +42,6 @@ class Site(BaseModel):
         """search using bs4 for data-naturkartan-preselected-site-id
         <div class="site-page-media__map"><div class="map-new" data-site-page-target="map" data-naturkartan-app-base="" data-naturkartan-api-base="https://api.naturkartan.se" data-naturkartan-naturkartan-base="https://www.naturkartan.se" data-naturkartan-meili-env="production" data-naturkartan-language="sv" data-naturkartan-disable-autoload="true" data-naturkartan-menu="fullscreen" data-naturkartan-query="site_with_neighbours=13979" data-naturkartan-strict="site" data-naturkartan-preselected-site-id="13979" data-controller="map-new" data-map-new-script-value="https://map-embed.naturkartan.se/embed.js"></div>
         """
-
-        html_content = '''
-        <div class="site-page-media__map">
-            <div class="map-new" data-site-page-target="map" data-naturkartan-app-base="" data-naturkartan-api-base="https://api.naturkartan.se" data-naturkartan-naturkartan-base="https://www.naturkartan.se" data-naturkartan-meili-env="production" data-naturkartan-language="sv" data-naturkartan-disable-autoload="true" data-naturkartan-menu="fullscreen" data-naturkartan-query="site_with_neighbours=13979" data-naturkartan-strict="site" data-naturkartan-preselected-site-id="13979" data-controller="map-new" data-map-new-script-value="https://map-embed.naturkartan.se/embed.js"></div>
-        </div>
-        '''
-
         # Create a SoupStrainer to parse only the 'div' elements with class 'map-new'
         only_map_new_div = SoupStrainer("div", class_="map-new")
 
