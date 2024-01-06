@@ -66,3 +66,7 @@ class Trail(BaseModel):
         else:
             logger.info("trail not found in WD")
             return ""
+
+    @property
+    def url(self):
+        return f"https://www.naturkartan.se/{self.path}"
