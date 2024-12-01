@@ -23,6 +23,11 @@ class Site(BaseModel):
         arbitrary_types_allowed = True
 
     @property
+    def needs_migration(self):
+        """If the path is already numeric, it is already migrated"""
+        return not self.path.isnumeric()
+
+    @property
     def url(self):
         return self.base_url + self.path
 
@@ -72,7 +77,12 @@ class Site(BaseModel):
             )
             item.add_claims(claims=[claim], action_if_exists=ActionIfExists.REPLACE_ALL)
             # pprint(item.get_json())
-            input("press enter to continue")
-            item.write(summary="Migrated to new ID using [[Wikidata:/Tools/NaturkartanScraper|NaturkartanScraper]]")
-            print(item.get_entity_url())
-            exit()
+            # input("press enter to continue")
+            item.write(summary="Migrated to new ID using [[Wikidata:Tools/NaturkartanScraper|NaturkartanScraper]]")
+            # print(item.get_entity_url())
+            print("Upload complete")
+            # input("press enter to continue")
+
+    @property
+    def wikidata_url(self):
+        return f"https://www.wikidata.org/wiki/{self.qid}"

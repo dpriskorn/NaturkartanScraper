@@ -27,15 +27,24 @@ class NaturkartanMigrator(BaseModel):
     sites: List[Site] = list()
 
     def iterate_sites(self):
-        print(f"iterating {len(self.sites)} sites")
-
+        number_sites = len(self.sites)
+        print(f"iterating {number_sites} sites")
+        count = 1
         for site in self.sites:
-            print(site.url)
-            site.download_html()
-            site.find_new_id()
-            site.migrate_to_new_id()
-            from time import sleep
-            sleep(3)
+            print(f"working on {count}/{number_sites}")
+            if site.needs_migration:
+                print(site.url)
+                print(site.wikidata_url)
+                site.download_html()
+                site.find_new_id()
+                site.migrate_to_new_id()
+                #from time import sleep
+                #sleep(3)
+                # if count % 10 == 0:
+                #     input("press enter to continue")
+            else:
+                print("already migrated")
+            count += 1
 
     def get_data(self) -> None:
         result = execute_sparql_query(query=self.query)
