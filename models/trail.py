@@ -18,21 +18,21 @@ class Trail(BaseModel):
     importance: int
     popularity: int
     guide_ids: List[int]
-    difficulty: Optional[str]
-    time: int  # in minutes
+    difficulty: Optional[str] = None
+    time: int = 0 # in minutes
     trip_ids: List[int]
     category_ids: List[int]
     organization_id: int
     wheelchair_tested: bool
-    main_icon_id: int
+    # main_icon_id: int
     municipality_id: int
-    average_rating: float
+    average_rating: float = 0.0
     path: str
-    trail_status_reported_at: Optional[str]
+    trail_status_reported_at: Optional[str] = None
     published: bool
     imgix_url: str
-    main_category_icon: str
-    length: float
+    # main_category_icon: str
+    length: float = 0.0 # what unit is this?
     _geo: GeoLocation = GeoLocation
 
     def municipality_qid(self, municipalities) -> str:

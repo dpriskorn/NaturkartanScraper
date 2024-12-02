@@ -5,9 +5,11 @@ curl 'https://meili.naturkartan.se/indexes/Site_production/search' --compressed 
 import json
 import logging
 from pprint import pprint
-from typing import List
+from typing import List, Any, Dict
 
+import requests
 from pydantic import BaseModel
+from safety.safety import session
 
 from models.municipalities import Municipalities
 from time import sleep
@@ -22,13 +24,14 @@ class NaturkartanScraper(BaseModel):
 
     municipalities: Municipalities
     trails: List[Trail] = list()
+    hits: List[Dict[str,Any]] = []
 
     @staticmethod
     def preprocess_data(data):
         """The API returns messy datatypes, so clean them up"""
         logger.debug("cleaning the data")
         cleaned_data = dict()
-        for key, value in data.items():
+        for key, value in data["document"].items():
             if key == "name_en" and (value == "" or value is None or value == "None"):
                 cleaned_data[key] = ""
             elif (key == "time" or key == "length" or key == "municipality_id") and (
@@ -46,19 +49,62 @@ class NaturkartanScraper(BaseModel):
                 cleaned_data[key] = value
         return cleaned_data
 
-    def parse_hits_from_file(self):
-        try:
-            with open("hits.json", "r") as file:
-                data = json.load(file)
-                hits = data.get("hits")
-                for hit in hits:
-                    processed_hit = self.preprocess_data(hit)
-                    # pprint(processed_hit)
-                    trail_instance = Trail(**processed_hit)
-                    self.trails.append(trail_instance)
-                print(f"Found {len(self.trails)} trails to process")
-        except FileNotFoundError:
-            print("File not found!")
+    def download_hiking_trails(self):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:132.0) Gecko/20100101 Firefox/132.0',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.5',
+            # 'Accept-Encoding': 'gzip, deflate, br, zstd',
+            'Origin': 'https://map.naturkartan.se',
+            'DNT': '1',
+            'Connection': 'keep-alive',
+            'Referer': 'https://map.naturkartan.se/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-site',
+            # Requests doesn't support trailers
+            # 'TE': 'trailers',
+        }
+
+        # Initialize variables
+        base_url = 'https://ts.naturkartan.se/collections/site:production/documents/search'
+        params = {
+            'limit': 250,
+            'q': '',
+            'query_by': 'name_sv,name_sv,tags,_keywords_sv',
+            # 33 = hiking
+            'filter_by': '(category_ids:=33 || main_icon_id:=33) && (published:=true) && marker_point:(60.614391346643174,10,60.614391346643174,26,67.1061086551916,26,67.1061086551916,10)',
+            'sort_by': 'importance:asc',
+            'include_fields': 'id,type,name_sv,name_sv,path,published,importance,average_rating,length,popularity,difficulty,time,wheelchair_tested,trail_status_reported_at,imgix_url,guide_ids,municipality_id,organization_id,trip_ids,category_ids,main_category_icon,main_icon_id,marker_point,show_elevations',
+            'x-typesense-api-key': '63P7WG7kIjhT3xFBzZxpSbIDo8G2BXn5'
+        }
+        # headers = {
+        #     'User-Agent': 'YourAppName/1.0',
+        #     'Authorization': 'Bearer YourAuthToken'  # If authentication is required
+        # }
+
+        # Fetch data for pages 1 to 7
+        session = requests.Session()
+
+        for page in range(1, 8):
+            params['page'] = page
+            response = session.get(base_url, params=params, headers=headers
+                                   )
+            if response.status_code == 200:
+                data = response.json()
+                hits = data["hits"]
+                self.hits.extend(hits)
+                print(f"Page {page} downloaded successfully with {len(hits)} hits. Total: {len(self.hits)} hits.")
+            else:
+                print(f"Failed to download page {page}: {response.status_code}")
+
+    def parse_hits_into_trails(self):
+        for hit in self.hits:
+            processed_hit = self.preprocess_data(hit)
+            pprint(processed_hit)
+            trail_instance = Trail(**processed_hit)
+            self.trails.append(trail_instance)
+        print(f"Processed {len(self.trails)} trails")
 
     def interate_trails(self):
         count_not_found = 0

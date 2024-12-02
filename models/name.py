@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class Name(BaseModel):
-    id: Optional[str]
+    id: Optional[str] = None
     nl: Optional[str]
     de: Optional[str]
     en: Optional[str]

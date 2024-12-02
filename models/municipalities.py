@@ -1,4 +1,5 @@
 import logging
+from pprint import pprint
 from typing import List, Any, Dict, Set
 
 from pydantic import BaseModel
@@ -96,7 +97,7 @@ class Municipalities(BaseModel):
     def parse_into_objects(self):
         for item in self.data:
             item = self.preprocess_item(item)
-            # pprint(item)
+            pprint(item)
             instance = Municipality(**item)
             self.municipalities.add(instance)
         print(f"Found {len(self.municipalities)} unique municipalities")
