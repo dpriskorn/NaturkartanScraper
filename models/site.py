@@ -1,23 +1,26 @@
 import logging
+from pprint import pprint
 
 import requests
 from bs4 import SoupStrainer, BeautifulSoup
 from pydantic import BaseModel
 from requests import Session
 from wikibaseintegrator import WikibaseIntegrator
-from wikibaseintegrator.datatypes import ExternalID
-from wikibaseintegrator.wbi_enums import ActionIfExists
+from wikibaseintegrator.datatypes import ExternalID, Item
+from wikibaseintegrator.wbi_enums import ActionIfExists, WikibaseRank
 
 logger = logging.getLogger(__name__)
 
 class Site(BaseModel):
     qid: str
     path: str
-    base_url: str = "https://www.naturkartan.se/sv/"
+    old_base_url: str = "https://www.naturkartan.se/sv/"
+    new_base_url: str = "https://api.naturkartan.se/"
     session: Session = Session()
     html: str = ""
     id: int = 0
     wbi: WikibaseIntegrator
+    download_success: bool = True
 
     class Config:
         arbitrary_types_allowed = True
@@ -28,20 +31,31 @@ class Site(BaseModel):
         return not self.path.isnumeric()
 
     @property
-    def url(self):
-        return self.base_url + self.path
+    def has_some_value(self):
+        """If the path is already numeric, it is already migrated"""
+        return "well-known" in self.path
 
 
-    def download_html(self):
+    @property
+    def old_url(self):
+        return self.old_base_url + self.path
+
+    @property
+    def new_url(self):
+        return self.new_base_url + self.path
+
+
+    def check_html(self):
         try:
-            response = self.session.get(self.url)
+            response = self.session.head(self.old_url)
             if response.status_code == 200:
-                self.html = response.text
+                pass
+                #self.html = response.text
             else:
                 print(f"Failed to fetch HTML. Status code: {response.status_code}")
+                self.download_success = False
         except requests.RequestException as e:
             print(f"Request Exception: {e}")
-        return None
 
     def find_new_id(self):
         """search using bs4 for data-naturkartan-preselected-site-id
@@ -83,6 +97,55 @@ class Site(BaseModel):
             print("Upload complete")
             # input("press enter to continue")
 
+    def remove_some_value(self):
+        item = self.wbi.item.get(self.qid)
+        item.claims.remove(property="P10467")
+        # pprint(item.get_json())
+        # exit()
+        # pprint(item.get_json())
+        # input("press enter to continue")
+        item.write(summary="Removed some value claim using [[Wikidata:Tools/NaturkartanScraper|NaturkartanScraper]]")
+        # print(item.get_entity_url())
+        print("Removal of some value claim complete")
+        #input("press enter to continue")
+
+    def upload_link_rot_information(self):
+        item = self.wbi.item.get(self.qid)
+        claims = item.claims.get(property="P10467")
+        if len(claims) > 1:
+            raise ValueError("more than one claim is not supported")
+        else:
+            # set to deprecated and add qualifier
+            claim = claims[0]
+            claim.rank = WikibaseRank.DEPRECATED
+            claim.qualifiers.add(qualifier=Item(
+                prop_nr="P2241", # reason for lower rank
+                value="Q1193907" # link rot
+            ))
+            # pprint(item.get_json())
+            # exit()
+            item.add_claims(claims=[claim], action_if_exists=ActionIfExists.REPLACE_ALL)
+            # pprint(item.get_json())
+            # input("press enter to continue")
+            item.write(summary="Changed rank to deprecated using [[Wikidata:Tools/NaturkartanScraper|NaturkartanScraper]]")
+            # print(item.get_entity_url())
+            print("Changing rank complete")
+            input("press enter to continue")
+
     @property
     def wikidata_url(self):
         return f"https://www.wikidata.org/wiki/{self.qid}"
+
+    @property
+    def has_rotten_link(self):
+        if self.needs_migration:
+            logger.debug("old")
+            response = self.session.head(self.old_url)
+        else:
+            logger.debug("new")
+            response = self.session.head(self.new_url)
+        logger.debug(response.status_code)
+        if response.status_code != 200:
+            return True
+        else:
+            return False

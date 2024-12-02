@@ -32,12 +32,21 @@ class NaturkartanMigrator(BaseModel):
         count = 1
         for site in self.sites:
             print(f"working on {count}/{number_sites}")
-            if site.needs_migration:
-                print(site.url)
+            if site.has_some_value:
                 print(site.wikidata_url)
-                site.download_html()
-                site.find_new_id()
-                site.migrate_to_new_id()
+                site.remove_some_value()
+                continue
+            if site.needs_migration:
+                print(site.old_url)
+                print(site.wikidata_url)
+                site.check_html()
+                if site.download_success:
+                    pass
+                    # site.find_new_id()
+                    # site.migrate_to_new_id()
+                else:
+                    site.upload_link_rot_information()
+                    #exit()
                 #from time import sleep
                 #sleep(3)
                 # if count % 10 == 0:
