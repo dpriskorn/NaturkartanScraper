@@ -128,7 +128,12 @@ class NaturkartanScraper(BaseModel):
 
     @property
     def hiking_trails(self) -> List[Trail]:
-        return [trail for trail in self.trails if trail.type == "Trail"]
+        return [trail for trail in self.trails if trail.type == "Trail" and
+                # no bike routes
+                "cykel" not in trail.name_sv
+                # exclude paths that are not really trails
+                #  "stig" not in trail.name_sv)
+                ]
 
     def export_trails_to_csv(self, filename: str = "trails.csv"):
         """
@@ -141,11 +146,13 @@ class NaturkartanScraper(BaseModel):
         header = [
             # "qid",
             "id",
+            "url",
             "name_sv",
+            "name_sv + length",
             # "name_en",
             # "lat",
             # "lon",
-            "municipality_qid",
+            "municipality",
             "length",
             # "type"
         ]
@@ -166,7 +173,9 @@ class NaturkartanScraper(BaseModel):
                     row = [
                         # trail.qid,  # QID
                         trail.id,  # Trail ID
+                        trail.url,
                         trail.name_sv,  # Swedish name
+                        f"{trail.name_sv} {trail.length} km",  # Swedish name
                         # trail.name_en,  # English name
                         # trail.lat,  # Latitude
                         # trail.lng,  # Longitude

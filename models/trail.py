@@ -77,4 +77,5 @@ class Trail(BaseModel):
 
     @property
     def url(self):
-        return f"https://www.naturkartan.se/{self.path}"
+        # return f"https://www.naturkartan.se/{self.path}"
+        return f"https://api.naturkartan.se/{self.id}"
