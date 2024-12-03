@@ -133,7 +133,17 @@ class NaturkartanScraper(BaseModel):
                 "cykel" not in trail.name_sv
                 # exclude paths that are not really trails
                 #  "stig" not in trail.name_sv)
+                # we don't want a lot of short paths because they are not notable
+                and trail.length >= 2
                 ]
+
+    def fetch_publishers(self):
+        session = requests.Session()
+        count = 1
+        for trail in self.hiking_trails:
+            print(f"fetching publisher {count}/{len(self.hiking_trails)} ")
+            trail.fetch_publisher(session=session)
+            count +=1
 
     def export_trails_to_csv(self, filename: str = "trails.csv"):
         """
@@ -142,6 +152,7 @@ class NaturkartanScraper(BaseModel):
         Args:
             filename (str): Path to the output CSV file.
         """
+        #self.fetch_publishers()
         # Define the header for the CSV file
         header = [
             # "qid",
@@ -155,6 +166,7 @@ class NaturkartanScraper(BaseModel):
             "municipality",
             "length",
             # "type"
+            # "publisher"
         ]
 
         # Open the file in write mode
@@ -182,6 +194,7 @@ class NaturkartanScraper(BaseModel):
                         trail.municipality_name_sv(municipalities=self.municipalities),  # Municipality QID
                         trail.length,  # Length
                         # trail.type  # Type
+                        # trail.publisher
                     ]
                     writer.writerow(row)
                 except Exception as e:
