@@ -1,6 +1,10 @@
 import logging
+import webbrowser
+from pprint import pprint
 from typing import List, Optional
 
+from consolemenu import ConsoleMenu, SelectionMenu
+from consolemenu.console_menu import MenuItem
 from pydantic import BaseModel
 from requests import Session
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
@@ -36,6 +40,10 @@ class Trail(BaseModel):
     lng: float = 0.0
     publisher: str = ""
     county: str = ""
+    number_of_sections: int = 0
+    length_source_url: str = ""
+    section_source_url: str = ""
+    already_in_wikidata: bool = False
 
     def municipality_qid(self, municipalities) -> str:
         m = municipalities.lookup_from_id(id_=self.municipality_id)
@@ -105,3 +113,75 @@ class Trail(BaseModel):
                 raise ValueError("Script tag with 'event-organization' not found.")
             self.publisher = event_organization
             self.county = event_county
+
+    @staticmethod
+    def ask_url(
+        text: str,
+    ):
+        """Ask mandatory question"""
+        answer = input(
+            f"{text}: [mandatory]:",
+        )
+        if len(answer) > 0:
+            return answer
+
+    @staticmethod
+    def ask_int(
+        text: str = "Input number of sections:",
+    ):
+        answer = input(
+            f"{text}: [km]:",
+        )
+        if len(answer) > 0:
+            return int(answer)
+        else:
+            return 0
+
+    @staticmethod
+    def ask_float(
+        text: str = "Input length:",
+    ):
+        answer = input(
+            f"{text}: [km]:",
+        )
+        if len(answer) > 0:
+            return float(answer.replace(",", "."))
+        else:
+            return 0.0
+
+    def get_information(self, municipalities, count: int, total: int):
+        if not municipalities:
+            raise ValueError()
+        municipality = self.municipality_name_sv(municipalities=municipalities)
+        print(f"Trail: {self.name_sv} in {municipality}")
+        self.find_in_wikidata(municipality=municipality, count=count, total=total)
+        if not self.already_in_wikidata:
+            print(f"Trail: {self.name_sv} in {municipality}")
+            print("Opening google to search")
+            webbrowser.open(f"https://www.google.com/search?q={self.name_sv}+{municipality}")
+            self.get_length_and_source_url()
+            self.get_section_and_source_url()
+            # pprint(self.model_dump())
+            # exit()
+
+    def get_length_and_source_url(self):
+        self.length = self.ask_float()
+        self.length_source_url = self.ask_url(text="Please paste a source url which state the length of the path")
+
+    def get_section_and_source_url(self):
+        self.number_of_sections = self.ask_int()
+        self.section_source_url = self.ask_url(text="Please paste a source url which "
+                                                          "state the number of sections of the path")
+
+    def find_in_wikidata(self, municipality=None, count=0, total=0):
+        print("Opening wikidata to search")
+        webbrowser.open(f"https://www.wikidata.org/w/index.php?search={self.name_sv}&title=Special%3ASearch&ns0=1")
+        # A SelectionMenu constructs a menu from a list of strings
+        selection_menu = SelectionMenu(title=f"Is {self.name_sv} in {municipality} "
+                                             f"already in Wikidata? "
+                                             f"({count}/{total})", strings=["Yes", "No"])
+        selection_menu.show()
+        if selection_menu.selected_option == 0:
+            self.already_in_wikidata = True
+        print(selection_menu.selected_option)
+        # we default to false so no else is needed

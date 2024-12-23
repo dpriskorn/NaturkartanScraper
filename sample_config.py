@@ -9,5 +9,7 @@ user_agent = (
     f"naturkartan-scraper, see https://github.com/dpriskorn/NaturkartanScraper User:{user_name_only}"
 )
 press_enter_to_continue = True
+minimum_trail_length = 15
+
 # validate_before_upload = False
 # upload_to_wikidata = True

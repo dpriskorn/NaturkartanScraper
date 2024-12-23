@@ -10,6 +10,7 @@ from typing import List, Any, Dict
 import requests
 from pydantic import BaseModel
 
+import config
 from models.municipalities import Municipalities
 from models.trail import Trail
 
@@ -134,16 +135,24 @@ class NaturkartanScraper(BaseModel):
                 # exclude paths that are not really trails
                 #  "stig" not in trail.name_sv)
                 # we don't want a lot of short paths because they are not notable
-                and trail.length >= 2
+                and trail.length >= config.minimum_trail_length
+                and trail.length < config.maximum_trail_length
                 ]
 
-    def fetch_publishers(self):
-        session = requests.Session()
+    # def fetch_publishers(self):
+    #     session = requests.Session()
+    #     count = 1
+    #     for trail in self.hiking_trails:
+    #         print(f"fetching publisher {count}/{len(self.hiking_trails)} ")
+    #         trail.fetch_publisher(session=session)
+    #         count +=1
+
+    def ask_user_for_information(self):
         count = 1
         for trail in self.hiking_trails:
-            print(f"fetching publisher {count}/{len(self.hiking_trails)} ")
-            trail.fetch_publisher(session=session)
-            count +=1
+            print(f"Working on {count}/{len(self.hiking_trails)}")
+            trail.get_information(municipalities=self.municipalities, count=count, total=len(self.hiking_trails))
+            count += 1
 
     def export_trails_to_csv(self, filename: str = "trails.csv"):
         """
@@ -152,7 +161,6 @@ class NaturkartanScraper(BaseModel):
         Args:
             filename (str): Path to the output CSV file.
         """
-        #self.fetch_publishers()
         # Define the header for the CSV file
         header = [
             # "qid",
@@ -165,6 +173,9 @@ class NaturkartanScraper(BaseModel):
             # "lon",
             "municipality",
             "length",
+            "length_url",
+            "sections",
+            "sections_url",
             # "type"
             # "publisher"
         ]
@@ -193,6 +204,9 @@ class NaturkartanScraper(BaseModel):
                         # trail.lng,  # Longitude
                         trail.municipality_name_sv(municipalities=self.municipalities),  # Municipality QID
                         trail.length,  # Length
+                        trail.length_source_url,
+                        trail.number_of_sections,
+                        trail.section_source_url,
                         # trail.type  # Type
                         # trail.publisher
                     ]
