@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 from pydantic import BaseModel
@@ -8,6 +9,9 @@ from wikibaseintegrator.wbi_login import Login
 
 import config
 from models.site import Site
+
+logging.basicConfig(level=config.loglevel)
+logger = logging.getLogger()
 
 wbconfig["USER_AGENT"] = config.user_agent
 
@@ -32,18 +36,18 @@ class NaturkartanMigrator(BaseModel):
         count = 1
         for site in self.sites:
             print(f"working on {count}/{number_sites}")
-            if site.has_some_value:
-                print(site.wikidata_url)
-                site.remove_some_value()
-                continue
+            # if site.has_some_value:
+            #     print(site.wikidata_url)
+            #     site.remove_some_value()
+            #     continue
             if site.needs_migration:
                 print(site.old_url)
                 print(site.wikidata_url)
-                site.check_html()
-                if site.download_success:
-                    pass
-                    # site.find_new_id()
-                    # site.migrate_to_new_id()
+                site.download_html()
+                if site.needs_migration:
+                    # pass
+                    site.find_new_id()
+                    site.migrate_to_new_id()
                 else:
                     site.upload_link_rot_information()
                     #exit()
