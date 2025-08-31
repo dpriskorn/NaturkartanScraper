@@ -42,6 +42,7 @@ class Trail(BaseModel):
     length_source_url: str = ""
     section_source_url: str = ""
     already_in_wikidata: bool = False
+    wikidata: str = ""
 
     def municipality_qid(self, municipalities) -> str:
         m = municipalities.lookup_from_id(id_=self.municipality_id)

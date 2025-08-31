@@ -8,6 +8,8 @@ import logging
 import os
 from typing import List, Any, Dict
 
+from copy import copy
+from wikibaseintegrator.wbi_helpers import execute_sparql_query
 import requests
 from pydantic import BaseModel
 
@@ -243,12 +245,12 @@ class NaturkartanScraper(BaseModel):
     #         trail.fetch_publisher(session=session)
     #         count +=1
 
-    def ask_user_for_information(self):
-        count = 1
-        for trail in self.hiking_trails:
-            print(f"Working on {count}/{len(self.hiking_trails)}")
-            trail.get_information(municipalities=self.municipalities, count=count, total=len(self.hiking_trails))
-            count += 1
+    # def ask_user_for_information(self):
+    #     count = 1
+    #     for trail in self.hiking_trails:
+    #         print(f"Working on {count}/{len(self.hiking_trails)}")
+    #         trail.get_information(municipalities=self.municipalities, count=count, total=len(self.hiking_trails))
+    #         count += 1
 
     def load_hits_from_debug_pages(self, folder: str = "debug_pages") -> None:
         """Read all hits from previously saved debug JSON pages."""
@@ -292,7 +294,8 @@ class NaturkartanScraper(BaseModel):
             "length_url",
             "sections",
             "sections_url",
-            "popularity"
+            "popularity",
+            "wikidata",
             # "type"
             # "publisher"
         ]
@@ -325,6 +328,7 @@ class NaturkartanScraper(BaseModel):
                         trail.number_of_sections,
                         trail.section_source_url,
                         trail.popularity,
+                        trail.wikidata,
                         # trail.type  # Type
                         # trail.publisher
                     ]
@@ -333,3 +337,37 @@ class NaturkartanScraper(BaseModel):
                     # Log or handle errors (e.g., missing data or failed lookups)
                     logging.error(f"Failed to export trail {trail.id}: {e}")
         print(f"Exported {len(self.hiking_trails)} hiking trails to csv that are longer than {config.minimum_trail_length_in_km} km")
+
+    def enrich_with_wikidata(self) -> None:
+        """
+        Downloads all QIDs with Naturkartan IDs (P10467) via WikibaseIntegrator
+        and enriches self.trails in place.
+        Creates new Trail objects (via copy).
+        """
+        query = """
+        SELECT ?item ?naturkartan WHERE {
+          ?item wdt:P10467 ?naturkartan .
+        }
+        """
+        results = execute_sparql_query(query)
+
+        # Map naturkartan_id -> QID
+        id_to_qid = {
+            b["naturkartan"]["value"]: b["item"]["value"].split("/")[-1]
+            for b in results["results"]["bindings"]
+        }
+
+        enriched: list[Trail] = []
+        matched = 0
+        for trail in self.trails:
+            t = copy(trail)
+            nkid = str(trail.id)
+            if nkid in id_to_qid:
+                t.wikidata = id_to_qid[nkid]
+                #t.already_in_wikidata = True
+                matched += 1
+            enriched.append(t)
+        print(f"Matched {matched} Naturkartan ids to QIDs")
+        # exit(0)
+        # Overwrite self.trails
+        self.trails = enriched
