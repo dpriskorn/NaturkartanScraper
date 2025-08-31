@@ -48,7 +48,7 @@ class Municipalities(BaseModel):
             url = self.base_url + next_link
         else:
             url = self.base_url + "/v3/municipalities"
-        logger.info(f"downloading url: {url}")
+        logger.debug(f"downloading url: {url}")
         # Make a GET request to fetch the next results
         response = self.session.get(url, headers=self.headers)
 
@@ -59,7 +59,7 @@ class Municipalities(BaseModel):
             data = response.json()
             if data.get("links") and data.get("links").get("next"):
                 next = data.get("links").get("next")
-                logger.info(f"found next: {next}")
+                logger.debug(f"found next: {next}")
                 return next
         else:
             raise ValueError("did not get 200")
@@ -69,7 +69,7 @@ class Municipalities(BaseModel):
         next_link = ""
         count = 1
         while True:
-            logger.info(f"request = {count}, len(data) = {len(self.data)}")
+            logger.debug(f"request = {count}, len(data) = {len(self.data)}")
             next_link = self.fetch_next_results(next_link=next_link)
             count += 1
             # break the loop if
@@ -97,7 +97,7 @@ class Municipalities(BaseModel):
     def parse_into_objects(self):
         for item in self.data:
             item = self.preprocess_item(item)
-            pprint(item)
+            # pprint(item)
             instance = Municipality(**item)
             self.municipalities.add(instance)
         print(f"Found {len(self.municipalities)} unique municipalities")

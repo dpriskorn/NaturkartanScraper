@@ -1,14 +1,12 @@
 import logging
 import webbrowser
-from pprint import pprint
 from typing import List, Optional
 
-from consolemenu import ConsoleMenu, SelectionMenu
-from consolemenu.console_menu import MenuItem
+from bs4 import BeautifulSoup
+from consolemenu import SelectionMenu
 from pydantic import BaseModel
 from requests import Session
 from wikibaseintegrator.wbi_helpers import execute_sparql_query
-from bs4 import BeautifulSoup, SoupStrainer
 
 logger = logging.getLogger(__name__)
 
@@ -20,20 +18,20 @@ class Trail(BaseModel):
     type: str
     importance: int
     popularity: int
-    guide_ids: List[int]
+    guide_ids: List[int] = []
     difficulty: Optional[str] = None
     time: int = 0 # in minutes
-    trip_ids: List[int]
-    category_ids: List[int]
-    organization_id: int
-    wheelchair_tested: bool
+    trip_ids: List[int] = []
+    category_ids: List[int] = []
+    organization_id: int = 0
+    wheelchair_tested: bool = False
     # main_icon_id: int
-    municipality_id: int
+    municipality_id: int = 0
     average_rating: float = 0.0
     path: str
     trail_status_reported_at: Optional[str] = None
     published: bool
-    imgix_url: str
+    imgix_url: str = ""
     # main_category_icon: str
     length: float = 0.0 # what unit is this?
     lat: float = 0.0
