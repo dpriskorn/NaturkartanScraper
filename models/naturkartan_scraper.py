@@ -285,7 +285,6 @@ class NaturkartanScraper(BaseModel):
             "id",
             "url",
             "name_sv",
-            "name_sv + length",
             # "name_en",
             # "lat",
             # "lon",
@@ -318,7 +317,6 @@ class NaturkartanScraper(BaseModel):
                         trail.id,  # Trail ID
                         trail.url,
                         trail.name_sv,  # Swedish name
-                        f"{trail.name_sv} {trail.length} km",  # Swedish name
                         # trail.name_en,  # English name
                         # trail.lat,  # Latitude
                         # trail.lng,  # Longitude
