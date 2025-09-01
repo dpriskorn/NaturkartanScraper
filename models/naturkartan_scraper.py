@@ -336,7 +336,7 @@ class NaturkartanScraper(BaseModel):
                 except Exception as e:
                     # Log or handle errors (e.g., missing data or failed lookups)
                     logging.error(f"Failed to export trail {trail.id}: {e}")
-        print(f"Exported {len(self.hiking_trails)} hiking trails to csv that are longer than {config.minimum_trail_length_in_km} km")
+        print(f"Exported {len(self.hiking_trails)} hiking trails to csv")
 
     def enrich_with_wikidata(self) -> None:
         """
