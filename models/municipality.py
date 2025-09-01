@@ -23,7 +23,7 @@ class Municipality(BaseModel):
 
     @property
     def name_sv(self) -> Optional[str]:
-        return self.attributes.name_sv
+        return self.attributes.name_sv + " kommun"
 
     @property
     def latitude(self) -> float:
