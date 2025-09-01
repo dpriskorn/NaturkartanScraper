@@ -290,9 +290,7 @@ class NaturkartanScraper(BaseModel):
             # "lon",
             "municipality",
             "length",
-            "length_url",
             "sections",
-            "sections_url",
             "popularity",
             "wikidata",
             # "type"
@@ -322,9 +320,7 @@ class NaturkartanScraper(BaseModel):
                         # trail.lng,  # Longitude
                         trail.municipality_name_sv(municipalities=self.municipalities),  # Municipality QID
                         trail.length,  # Length
-                        trail.length_source_url,
                         trail.number_of_sections,
-                        trail.section_source_url,
                         trail.popularity,
                         trail.wikidata,
                         # trail.type  # Type
