@@ -234,7 +234,7 @@ class NaturkartanScraper(BaseModel):
                 # exclude paths that are not really trails
                 #  "stig" not in trail.name_sv)
                 # we don't want a lot of short paths because they are not notable
-                and config.minimum_trail_length_in_km <= trail.length < config.maximum_trail_length_in_km
+                # and config.minimum_trail_length_in_km <= trail.length < config.maximum_trail_length_in_km
                 ]
 
     # def fetch_publishers(self):
