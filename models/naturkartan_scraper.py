@@ -290,7 +290,8 @@ class NaturkartanScraper(BaseModel):
             # "lon",
             "municipality",
             "length",
-            "sections",
+            "rounded_length",
+            "desc",
             "popularity",
             "wikidata",
             # "type"
@@ -310,6 +311,8 @@ class NaturkartanScraper(BaseModel):
                 # exit()
                 try:
                     # Use trail attributes and lookup for municipality_qid
+                    rounded_length = round(trail.length)
+                    municipality = trail.municipality_name_sv(municipalities=self.municipalities)
                     row = [
                         # trail.qid,  # QID
                         trail.id,  # Trail ID
@@ -318,9 +321,10 @@ class NaturkartanScraper(BaseModel):
                         # trail.name_en,  # English name
                         # trail.lat,  # Latitude
                         # trail.lng,  # Longitude
-                        trail.municipality_name_sv(municipalities=self.municipalities),  # Municipality QID
+                        municipality,  # Municipality name
                         trail.length,  # Length
-                        trail.number_of_sections,
+                        rounded_length,
+                        f"{rounded_length} km vandringsled i {municipality}",
                         trail.popularity,
                         trail.wikidata,
                         # trail.type  # Type
