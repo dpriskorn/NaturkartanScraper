@@ -1,4 +1,5 @@
 import logging
+import re
 import webbrowser
 from typing import List, Optional
 
@@ -184,3 +185,26 @@ class Trail(BaseModel):
             self.already_in_wikidata = True
         print(selection_menu.selected_option)
         # we default to false so no else is needed
+
+    @property
+    def clean_name_sv(self) ->str:
+        # reverse when there is a comma
+        parts = self.name_sv.split(",")
+        if len(parts) == 2:
+            # reverse
+            name = f"{parts[1].strip()} {parts[0].strip()}"
+        else:
+            # ignore more parts than 3
+            name = ",".join(parts)
+
+        # replace
+        clean_1 = (name
+                .replace(" - En del av Smålandsleden","")
+                # .replace(",","")
+                .replace("-", " – ")  # dash with spaces
+                .replace("  "," ")  # collapse spaces
+                .replace("<>","–")
+                # .replace("","")
+        )
+        clean_2 = re.sub(r"\b\d{2} km\b", "", clean_1) # \b is word boundary
+        return clean_2
